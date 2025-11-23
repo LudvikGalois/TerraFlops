@@ -229,17 +229,6 @@ Top 3 Configurations by Accuracy
 
 As a example the above shows the top 3 configs ranked by accuracy with their sustainability metrics. All three achieve perfect accuracy, but with slightly different environmental costs - you can see which hyperparameters give you the best performance whilst also being more sustainable. The goal isn't to sacrifice accuracy for sustainability, but to understand the environmental cost of your performance choices.
 
-## Why this exists
-
-CodeCarbon gives you the raw carbon emissions - TerraFlops adds context about how efficiently you used your hardware to generate those emissions. The sustainability score balances two perspectives:
-
-1. **Hardware efficiency:** Did you use the machine well or waste energy on idle overhead?
-2. **Carbon efficiency:** What was the total environmental cost per unit of work done?
-
-A model can have low total emissions but still be wasteful if it left hardware idle (poor utilisation = high cooling/overhead waste). Conversely, a model can max out hardware efficiently but emit massive carbon if it's training on power-hungry equipment.
-
-The composite score gives you both angles so you can make informed choices  whether that's maximising the hardware you've got, minimising absolute environmental impact, or finding the best balance.
-
 ## Contributing
 
 Missing hardware in `power_data.json`? Open an issue with your CPU/GPU model name and TDP value from the manufacturer's spec sheet.
