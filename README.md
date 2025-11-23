@@ -97,8 +97,7 @@ print(f"Carbon per accuracy: {report['Carbon_per_Accuracy']} kg")
 
 5. **Composite Score** = (Hardware Score × 0.7) + (Carbon Score × 0.3)
 
-**Why composite?**
-Prevents misleading scores where high-power models get perfect ratings just for maxing out hardware. A 1000W model running at 100% load isn't automatically better than a 200W model at 100% load. The carbon efficiency component rewards models that do the same work with less total environmental impact.
+This composite score prevents misleading scores where high-power models get perfect ratings just for maxing out hardware. A 1000W model running at 100% load isn't automatically better than a 200W model at 100% load. The carbon efficiency component rewards models that do the same work with less total environmental impact.
 
 **Real example:**
 
