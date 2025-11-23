@@ -117,7 +117,10 @@ for result in results:
     print(f"  F1:            {result['F1_Score']:.4f}")
     print(f"  Train time:    {result['Training_Time_sec']}s")
     print(f"  Sustainability: {result['Sustainability_Score']}/10")
+    print(f"    - Hardware efficiency:  {result['Hardware_Efficiency_Score']}/10")
+    print(f"    - Carbon efficiency:    {result['Carbon_Efficiency_Score']}/10")
     print(f"  Carbon:        {result['Total_Carbon_Footprint_kg']:.6f} kg CO2")
+    print(f"  Carbon/Acc:    {result['Carbon_per_Accuracy']:.8f} kg per accuracy point")
     print(f"  PUE:           {result['True_PUE']:.3f}")
     print(f"  Best params:   {result['Best_Params']}")
 

@@ -36,7 +36,33 @@ class TerraScore:
         accuracy = accuracy_score(y_true, y_pred)
         macro_f1 = f1_score(y_true, y_pred, average='macro')
 
-        # 4. Construct the Unified Report
+        # 4. Calculate Carbon Efficiency
+        # Shows kg CO2 per unit of performance - lower is better
+        # Prevents misleading "high efficiency but massive emissions" scenarios
+        carbon_per_accuracy = final_emissions_kg / max(accuracy, 0.01)
+        carbon_per_f1 = final_emissions_kg / max(macro_f1, 0.01)
+
+        # 5. Calculate Composite Sustainability Score
+        # Combines hardware efficiency (PUE-based) with carbon efficiency
+        # PUE score: 70% weight (how efficiently you used the hardware)
+        # Carbon efficiency score: 30% weight (absolute environmental cost per work done)
+        
+        # Normalize carbon efficiency to 0-10 scale (lower carbon = higher score)
+        # Use log scale since carbon values can vary by orders of magnitude
+        # Typical range: 1e-8 to 1e-3 kg per accuracy point
+        import math
+        if carbon_per_accuracy > 0:
+            # Map carbon efficiency to 0-10 scale (inverse: less carbon = higher score)
+            # 1e-8 or less = 10, 1e-3 or more = 0
+            log_carbon = math.log10(carbon_per_accuracy)
+            carbon_score = max(0, min(10, 10 - ((log_carbon + 8) * 2)))
+        else:
+            carbon_score = 10.0
+        
+        # Weighted composite score
+        composite_score = round((eff_score * 0.7) + (carbon_score * 0.3), 1)
+
+        # 6. Construct the Unified Report
         green_report = {
             # --- Model Performance ---
             "Model_Accuracy": round(accuracy, 4),
@@ -49,10 +75,15 @@ class TerraScore:
             "True_PUE": round(pue, 3),
             "Total_Carbon_Footprint_kg": final_emissions_kg,
             
-            # --- The "TerraScore" (0-10) ---
-            # 10 = Perfect Hardware Utilization (High Load, Low Waste)
-            # 0  = Poor Utilization (Idle waste, high overhead)
-            "Sustainability_Score": eff_score
+            # --- Efficiency Metrics ---
+            # Composite sustainability: Balances hardware utilization + absolute carbon cost
+            "Sustainability_Score": composite_score,
+            # Individual components for transparency
+            "Hardware_Efficiency_Score": eff_score,
+            "Carbon_Efficiency_Score": round(carbon_score, 1),
+            # Raw metrics
+            "Carbon_per_Accuracy": round(carbon_per_accuracy, 8),
+            "Carbon_per_F1": round(carbon_per_f1, 8)
         }
 
         return green_report
@@ -67,7 +98,7 @@ class TerraScore:
         # Reorder columns for readability
         cols = [
             "Model_Name", "Model_Accuracy", "Sustainability_Score", 
-            "Total_Carbon_Footprint_kg", "True_PUE"
+            "Total_Carbon_Footprint_kg", "Carbon_per_Accuracy", "True_PUE"
         ]
         # Handle case where Model_Name might not be in dict yet
         if "Model_Name" not in df.columns:
