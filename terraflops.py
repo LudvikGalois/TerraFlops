@@ -214,6 +214,48 @@ class HardwareMonitor:
                 except: pass
         except: pass
 
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                try:
+                    atiadlxx = ctypes.WinDLL("atiadlxx.dll")
+                except:
+                    atiadlxx = ctypes.WinDLL("atiadl64.dll")
+                
+                ADL_OK = 0
+                ADL_Main_Control_Create = atiadlxx.ADL_Main_Control_Create
+                ADL_Main_Control_Create.restype = ctypes.c_int
+                ADL_Adapter_NumberOfAdapters_Get = atiadlxx.ADL_Adapter_NumberOfAdapters_Get
+                ADL_Overdrive5_CurrentActivity_Get = atiadlxx.ADL_Overdrive5_CurrentActivity_Get
+                
+                if ADL_Main_Control_Create(ctypes.c_void_p(1), ctypes.c_int(0)) == ADL_OK:
+                    num_adapters = ctypes.c_int(0)
+                    if ADL_Adapter_NumberOfAdapters_Get(ctypes.byref(num_adapters)) == ADL_OK:
+                        class ADLPMActivity(ctypes.Structure):
+                            _fields_ = [
+                                ("iSize", ctypes.c_int),
+                                ("iEngineClock", ctypes.c_int),
+                                ("iMemoryClock", ctypes.c_int),
+                                ("iVddc", ctypes.c_int),
+                                ("iActivityPercent", ctypes.c_int),
+                                ("iCurrentPerformanceLevel", ctypes.c_int),
+                                ("iCurrentBusSpeed", ctypes.c_int),
+                                ("iCurrentBusLanes", ctypes.c_int),
+                                ("iMaximumBusLanes", ctypes.c_int),
+                                ("iReserved", ctypes.c_int),
+                            ]
+                        
+                        for adapter_idx in range(num_adapters.value):
+                            activity = ADLPMActivity()
+                            activity.iSize = ctypes.sizeof(ADLPMActivity)
+                            if ADL_Overdrive5_CurrentActivity_Get(adapter_idx, ctypes.byref(activity)) == ADL_OK:
+                                gpu_name = self._identify_gpu_name()
+                                gpu_tdp = self._lookup_tdp(gpu_name, "gpu")
+                                if gpu_tdp > 0 and activity.iActivityPercent > 0:
+                                    total_watts += (gpu_tdp * activity.iActivityPercent / 100.0)
+            except:
+                pass
+
         total_watts += self.ram_power_watts
         
         if total_watts <= self.ram_power_watts and sys.platform == "win32":

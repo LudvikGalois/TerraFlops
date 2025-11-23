@@ -70,11 +70,11 @@ for idx, params in enumerate(param_combinations, 1):
     print(f"done")
 
 print("\n" + "=" * 50)
-print("Top 3 Configurations")
+print("Top 3 Configurations by Accuracy")
 print("=" * 50)
 
 df = pd.DataFrame(results)
-df = df.sort_values('Sustainability_Score', ascending=False)
+df = df.sort_values('Model_Accuracy', ascending=False)
 
 for rank, (idx, row) in enumerate(df.head(3).iterrows(), 1):
     print(f"\n#{rank} - C={row['C']}, solver={row['Solver']}, max_iter={row['Max_Iter']}")

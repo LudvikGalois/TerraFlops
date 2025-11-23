@@ -193,25 +193,14 @@ SVM:
   PUE:           1.135
 ```
 
-SVM wins on composite score (7.8 vs 7.1) despite slightly lower accuracy. Both models have identical hardware efficiency (cloud mode, fixed PUE), but SVM emits 18x less carbon per accuracy point. The breakdown shows that whilst Random Forest achieved perfect accuracy, it came at much higher environmental cost.
-
 ### Hyperparameter tuning
 
-Run `python hyperparameter_tuning_single_model.py` to see sustainability across 45 Logistic Regression configurations:
+Run `python hyperparameter_tuning_single_model.py` to see sustainability metrics across 45 Logistic Regression configurations:
 
 ```
-Top 3 Configurations
+Top 3 Configurations by Accuracy
 ==================================================
-#1 - C=0.1, solver=lbfgs, max_iter=1000
-    Accuracy: 0.9556
-    Sustainability: 8.5/10
-      - Hardware efficiency: 9.5/10
-      - Carbon efficiency: 6.0/10
-    Carbon: 0.00000094 kg CO2
-    Carbon/Acc: 0.00000099 kg
-    Training time: 0.008s
-
-#2 - C=1.0, solver=saga, max_iter=1000
+#1 - C=1.0, solver=saga, max_iter=1000
     Accuracy: 1.0000
     Sustainability: 8.5/10
       - Hardware efficiency: 9.5/10
@@ -220,7 +209,7 @@ Top 3 Configurations
     Carbon/Acc: 0.00000093 kg
     Training time: 0.013s
 
-#3 - C=10.0, solver=lbfgs, max_iter=100
+#2 - C=10.0, solver=lbfgs, max_iter=100
     Accuracy: 1.0000
     Sustainability: 8.5/10
       - Hardware efficiency: 9.5/10
@@ -228,20 +217,29 @@ Top 3 Configurations
     Carbon: 0.00000094 kg CO2
     Carbon/Acc: 0.00000094 kg
     Training time: 0.013s
+
+#3 - C=100.0, solver=newton-cg, max_iter=500
+    Accuracy: 1.0000
+    Sustainability: 8.4/10
+      - Hardware efficiency: 9.5/10
+      - Carbon efficiency: 6.0/10
+    Carbon: 0.00000095 kg CO2
+    Carbon/Acc: 0.00000095 kg
+    Training time: 0.015s
 ```
 
-Config #1 ranks highest despite 4.4% lower accuracy because it trains fastest with excellent hardware utilisation. Config #2 and #3 achieve perfect accuracy but at slightly higher carbon cost. The output helps you decide: is perfect accuracy worth the extra emissions, or is 95.6% accuracy with lower environmental impact acceptable for your use case?
+As a example the above shows the top 3 configs ranked by accuracy with their sustainability metrics. All three achieve perfect accuracy, but with slightly different environmental costs - you can see which hyperparameters give you the best performance whilst also being more sustainable. The goal isn't to sacrifice accuracy for sustainability, but to understand the environmental cost of your performance choices.
 
 ## Why this exists
 
-CodeCarbon measures energy consumption but misses the efficiency context. TerraFlops adds a sustainability score that balances two perspectives:
+CodeCarbon gives you the raw carbon emissions - TerraFlops adds context about how efficiently you used your hardware to generate those emissions. The sustainability score balances two perspectives:
 
 1. **Hardware efficiency:** Did you use the machine well or waste energy on idle overhead?
 2. **Carbon efficiency:** What was the total environmental cost per unit of work done?
 
 A model can have low total emissions but still be wasteful if it left hardware idle (poor utilisation = high cooling/overhead waste). Conversely, a model can max out hardware efficiently but emit massive carbon if it's training on power-hungry equipment.
 
-The composite score gives you both angles so you can pick models that match your priorities - whether that's maximising the hardware you've got, minimising absolute environmental impact, or finding the best balance.
+The composite score gives you both angles so you can make informed choices  whether that's maximising the hardware you've got, minimising absolute environmental impact, or finding the best balance.
 
 ## Contributing
 
