@@ -157,12 +157,12 @@ Returns fixed PUE of 1.0 (perfect efficiency). Useful for development, testing, 
 
 **Windows:**
 - CPU: wmic for name, falls back to TDP × usage% for power
-- GPU: nvidia-smi for NVIDIA cards, wmic for integrated
-- No native power reading for CPU/AMD GPUs (uses estimation)
+- GPU: nvidia-smi for NVIDIA cards, AMD Display Library (ADL) for AMD cards, wmic for integrated
+- AMD GPU power via ADL (activity % × TDP), CPU uses estimation fallback
 
 **GPU support:**
 - NVIDIA: Direct power via nvidia-smi (all platforms)
-- AMD: Direct power via sysfs (Linux only)
+- AMD: Direct power via sysfs (Linux) or AMD Display Library/ADL (Windows)
 - Intel/integrated: Included in CPU package power (not counted separately)
 
 ## Example outputs
