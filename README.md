@@ -4,9 +4,9 @@ Score ML models on environmental impact with sustainability ratings from 1-10.
 
 ## What it does
 
-TerraFlops gives your models a sustainability score that accounts for both energy consumption and hardware efficiency. Works with CodeCarbon to measure carbon footprint, then adjusts for PUE (Power Usage Effectiveness) to show the real environmental cost.
+TerraFlops gives your models a sustainability score that accounts for both energy consumption and hardware efficiency. Works with CodeCarbon to measure carbon footprint, then adjusts for PUE (Power Usage Effectiveness) to show the actual environmental cost.
 
-Choose your training environment (local hardware or cloud provider) and get a score showing how bad your model was for the environment. Lower power usage doesn't always mean more sustainable - a model that trains fast but leaves hardware idle wastes energy on cooling and overhead.
+Pick your training environment (local hardware or cloud provider) and get a score showing how environmentally bad your model was. Lower power usage doesn't always mean more sustainable - a model that trains quickly but leaves hardware idle wastes energy on cooling and overhead.
 
 ## How it works
 
@@ -26,7 +26,7 @@ Choose your training environment (local hardware or cloud provider) and get a sc
 - Load < 10%: PUE 1.60 (terrible - mostly idle waste)
 - Load < 30%: PUE 1.40 (poor)
 - Load < 60%: PUE 1.20 (average)
-- Load ≥ 60%: PUE 1.08 (excellent - efficient utilization)
+- Load ≥ 60%: PUE 1.08 (excellent - efficient utilisation)
 
 **Fallbacks:**
 - Unknown CPU: 65W default (30W for Apple Silicon)
@@ -52,7 +52,7 @@ from terrascore import TerraScore
 
 # Choose your environment
 evaluator = TerraFlops(mode="local_auto")  # or mode="cloud", provider="AWS"
-tracker = EmissionsTracker(save_to_file=False)
+tracker = EmissionsTracker(save_to_file=False, log_level="error")
 
 evaluator.start()
 tracker.start()
@@ -98,41 +98,50 @@ print(f"Carbon per accuracy: {report['Carbon_per_Accuracy']} kg")
 5. **Composite Score** = (Hardware Score × 0.7) + (Carbon Score × 0.3)
 
 **Why composite?**
-Prevents misleading scores where high-power models get perfect ratings just for maxing out hardware. A 1000W model running at 100% load isn't automatically better than a 200W model at 100% load. The carbon efficiency component rewards models that accomplish the same work with less total environmental impact.
+Prevents misleading scores where high-power models get perfect ratings just for maxing out hardware. A 1000W model running at 100% load isn't automatically better than a 200W model at 100% load. The carbon efficiency component rewards models that do the same work with less total environmental impact.
 
 **Real example:**
 
-Random Forest: 34.6W avg, 4.23s, 0.000019 kg CO2 → **7.5/10**
-- Hardware efficiency: 9.2/10 (high utilization, PUE 1.10)
-- Carbon efficiency: 3.5/10 (0.000019 kg per accuracy point)
-- Used more total power but efficiently utilized hardware
+Random Forest: 4.10s, 0.000019 kg CO2 → **7.1/10**
+- Hardware efficiency: 8.6/10 (cloud mode, AWS PUE 1.135)
+- Carbon efficiency: 3.5/10 (0.00001878 kg per accuracy point)
+- Perfect accuracy but high carbon cost
 
-SVM: 5.4W avg, 0.05s, 0.000001 kg CO2 → **7.0/10**
-- Hardware efficiency: 7.5/10 (lower utilization, PUE 1.20)
-- Carbon efficiency: 5.9/10 (0.000001 kg per accuracy point)
-- Used less total power with better carbon cost per performance
+SVM: 0.05s, 0.000001 kg CO2 → **7.8/10**
+- Hardware efficiency: 8.6/10 (cloud mode, AWS PUE 1.135)
+- Carbon efficiency: 5.9/10 (0.00000107 kg per accuracy point)
+- Slightly lower accuracy but 18x better carbon efficiency
 
-Random Forest edges ahead due to better hardware utilization, but the gap is smaller than pure PUE scoring would suggest. The composite score recognizes that while Random Forest used the machine well, it still emitted 18x more carbon per accuracy point. Users can see both perspectives and make informed choices based on their priorities.
+SVM wins on composite score despite 2.2% lower accuracy. Both have identical hardware efficiency in cloud mode (fixed PUE), but SVM's dramatically lower carbon cost per accuracy point gives it the edge. The composite score shows that Random Forest's perfect accuracy came at much higher environmental cost - you can decide if that trade-off's worth it for your use case.
 
 ## Choosing your environment
 
-**Training on your own hardware:**
+**Training on your own device or bare-metal server:**
 ```python
 evaluator = TerraFlops(mode="local_auto")
 ```
-Monitors actual hardware utilization to calculate dynamic PUE.
+Monitors actual hardware utilisation to calculate dynamic PUE based on load. Use for non-virtualised environments where you've got direct sensor access - laptops, workstations, physical servers. Gives the most accurate tracking by measuring real hardware load and adjusting PUE accordingly.
 
-**Training on cloud (AWS, GCP, Azure):**
+**Training on cloud or HPC clusters:**
 ```python
 evaluator = TerraFlops(mode="cloud", provider="AWS")  # or "GCP", "AZURE", "GENERIC"
 ```
-Uses industry-reported PUE values for major cloud providers.
+Uses industry-reported PUE values for standardised tracking. Use when:
+- Training on cloud VMs (AWS, GCP, Azure) where hardware sensors aren't accessible
+- Running on HPC/datacentre infrastructure - use `provider="GENERIC"` for general datacentre average PUE (1.5)
+- You want consistent cross-provider comparisons using published datacentre efficiency metrics
 
-**Testing/debugging:**
+**Testing/debugging without hardware monitoring:**
 ```python
 evaluator = TerraFlops(mode="default")
 ```
-Skips monitoring, returns PUE 1.0.
+Returns fixed PUE of 1.0 (perfect efficiency). Useful for development, testing, or when you only care about raw CodeCarbon emissions without PUE adjustment.
+
+**Limitations:**
+- `mode="default"` assumes zero overhead (PUE 1.0), which is unrealistic for actual datacentres. Only use for testing or when you want to ignore infrastructure efficiency entirely.
+- Hardware efficiency score will be fixed at 10/10 in default mode since PUE's always optimal.
+- Carbon efficiency score still varies based on actual emissions, so you get some sustainability signal even in default mode.
+- For accurate sustainability tracking, use `local_auto` (physical devices) or `cloud` (virtualised/datacentre environments) to get realistic PUE values.
 
 ## Platform support
 
@@ -156,33 +165,72 @@ Skips monitoring, returns PUE 1.0.
 - AMD: Direct power via sysfs (Linux only)
 - Intel/integrated: Included in CPU package power (not counted separately)
 
-## Example output
+## Example outputs
+
+### Comparing model types
 
 Run `python test_output.py` to see GridSearchCV comparison on Iris dataset:
 
 ```
 Random Forest:
   Accuracy:      1.0000
-  Train time:    4.23s
-  Sustainability: 7.5/10
-    - Hardware efficiency:  9.2/10
+  Train time:    4.10s
+  Sustainability: 7.1/10
+    - Hardware efficiency:  8.6/10
     - Carbon efficiency:    3.5/10
   Carbon:        0.000019 kg CO2
-  Carbon/Acc:    0.00001879 kg per accuracy point
-  PUE:           1.100
+  Carbon/Acc:    0.00001878 kg per accuracy point
+  PUE:           1.135
 
 SVM:
   Accuracy:      0.9778
   Train time:    0.05s
-  Sustainability: 7.0/10
-    - Hardware efficiency:  7.5/10
+  Sustainability: 7.8/10
+    - Hardware efficiency:  8.6/10
     - Carbon efficiency:    5.9/10
   Carbon:        0.000001 kg CO2
-  Carbon/Acc:    0.00000113 kg per accuracy point
-  PUE:           1.200
+  Carbon/Acc:    0.00000107 kg per accuracy point
+  PUE:           1.135
 ```
 
-Random Forest edges ahead on composite score (7.5 vs 7.0) with higher hardware utilization, while SVM is more carbon-efficient per accuracy point. The breakdown lets you see both hardware efficiency and absolute environmental cost, helping you choose based on your priorities.
+SVM wins on composite score (7.8 vs 7.1) despite slightly lower accuracy. Both models have identical hardware efficiency (cloud mode, fixed PUE), but SVM emits 18x less carbon per accuracy point. The breakdown shows that whilst Random Forest achieved perfect accuracy, it came at much higher environmental cost.
+
+### Hyperparameter tuning
+
+Run `python hyperparameter_tuning_single_model.py` to see sustainability across 45 Logistic Regression configurations:
+
+```
+Top 3 Configurations
+==================================================
+#1 - C=0.1, solver=lbfgs, max_iter=1000
+    Accuracy: 0.9556
+    Sustainability: 8.5/10
+      - Hardware efficiency: 9.5/10
+      - Carbon efficiency: 6.0/10
+    Carbon: 0.00000094 kg CO2
+    Carbon/Acc: 0.00000099 kg
+    Training time: 0.008s
+
+#2 - C=1.0, solver=saga, max_iter=1000
+    Accuracy: 1.0000
+    Sustainability: 8.5/10
+      - Hardware efficiency: 9.5/10
+      - Carbon efficiency: 6.1/10
+    Carbon: 0.00000093 kg CO2
+    Carbon/Acc: 0.00000093 kg
+    Training time: 0.013s
+
+#3 - C=10.0, solver=lbfgs, max_iter=100
+    Accuracy: 1.0000
+    Sustainability: 8.5/10
+      - Hardware efficiency: 9.5/10
+      - Carbon efficiency: 6.1/10
+    Carbon: 0.00000094 kg CO2
+    Carbon/Acc: 0.00000094 kg
+    Training time: 0.013s
+```
+
+Config #1 ranks highest despite 4.4% lower accuracy because it trains fastest with excellent hardware utilisation. Config #2 and #3 achieve perfect accuracy but at slightly higher carbon cost. The output helps you decide: is perfect accuracy worth the extra emissions, or is 95.6% accuracy with lower environmental impact acceptable for your use case?
 
 ## Why this exists
 
@@ -191,9 +239,9 @@ CodeCarbon measures energy consumption but misses the efficiency context. TerraF
 1. **Hardware efficiency:** Did you use the machine well or waste energy on idle overhead?
 2. **Carbon efficiency:** What was the total environmental cost per unit of work done?
 
-A model can have low total emissions but still be wasteful if it left hardware idle (poor utilization = high cooling/overhead waste). Conversely, a model can max out hardware efficiently but emit massive carbon if it's training on power-hungry equipment.
+A model can have low total emissions but still be wasteful if it left hardware idle (poor utilisation = high cooling/overhead waste). Conversely, a model can max out hardware efficiently but emit massive carbon if it's training on power-hungry equipment.
 
-The composite score gives you both angles so you can pick models that match your priorities - whether that's maximizing the hardware you have, minimizing absolute environmental impact, or finding the best balance.
+The composite score gives you both angles so you can pick models that match your priorities - whether that's maximising the hardware you've got, minimising absolute environmental impact, or finding the best balance.
 
 ## Contributing
 

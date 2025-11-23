@@ -27,8 +27,8 @@ print("\n" + "=" * 60)
 print("Training Random Forest with GridSearch")
 print("=" * 60)
 
-evaluator_rf = TerraFlops(mode="local_auto")
-tracker_rf = EmissionsTracker(project_name="RandomForest_GridSearch", save_to_file=False)
+evaluator_rf = TerraFlops(mode="cloud", provider="AWS")
+tracker_rf = EmissionsTracker(project_name="RandomForest_GridSearch", save_to_file=False, log_level="error")
 
 evaluator_rf.start()
 tracker_rf.start()
@@ -66,8 +66,8 @@ print("\n" + "=" * 60)
 print("Training SVM with GridSearch")
 print("=" * 60)
 
-evaluator_svm = TerraFlops(mode="local_auto")
-tracker_svm = EmissionsTracker(project_name="SVM_GridSearch", save_to_file=False)
+evaluator_svm = TerraFlops(mode="cloud", provider="AWS")
+tracker_svm = EmissionsTracker(project_name="SVM_GridSearch", save_to_file=False, log_level="error")
 
 evaluator_svm.start()
 tracker_svm.start()
@@ -121,7 +121,7 @@ for result in results:
     print(f"    - Carbon efficiency:    {result['Carbon_Efficiency_Score']}/10")
     print(f"  Carbon:        {result['Total_Carbon_Footprint_kg']:.6f} kg CO2")
     print(f"  Carbon/Acc:    {result['Carbon_per_Accuracy']:.8f} kg per accuracy point")
-    print(f"  PUE:           {result['True_PUE']:.3f}")
+    print(f"  PUE:           {result['PUE']:.3f}")
     print(f"  Best params:   {result['Best_Params']}")
 
 best_perf = max(results, key=lambda x: x['Model_Accuracy'])['Model_Name']

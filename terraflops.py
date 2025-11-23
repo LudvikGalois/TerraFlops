@@ -66,7 +66,6 @@ class HardwareMonitor:
             else:
                 total_ram_power += 3.5
 
-        print(f"[TerraFlops] RAM Estimation: {total_gb:.1f}GB -> ~{dimms} DIMMs ({total_ram_power:.1f}W)")
         return total_ram_power
 
     def _identify_cpu_name(self) -> str:
@@ -158,18 +157,14 @@ class HardwareMonitor:
             cpu_tdp = 30.0 if self._is_apple_silicon() else 65.0
         
         total_tdp += cpu_tdp
-        print(f"[TerraFlops] Detected CPU: '{cpu_name}' (Max TDP: {cpu_tdp}W)")
 
         if not self._is_apple_silicon():
             gpu_name = self._identify_gpu_name()
             if gpu_name:
                 gpu_tdp = self._lookup_tdp(gpu_name, "gpu")
-                if self._is_integrated_gpu(gpu_name):
-                    print(f"[TerraFlops] Detected iGPU: '{gpu_name}'. Included in CPU Package.")
-                else:
+                if not self._is_integrated_gpu(gpu_name):
                     if gpu_tdp == 0.0: gpu_tdp = 250.0
                     total_tdp += gpu_tdp
-                    print(f"[TerraFlops] Detected Discrete GPU: '{gpu_name}' (Max TDP: {gpu_tdp}W)")
 
         total_tdp += self.ram_power_watts
 
@@ -264,7 +259,6 @@ class TerraFlops:
 
     def _monitor_loop(self):
         """Background thread that continuously monitors power usage and calculates PUE."""
-        print("[TerraFlops] Background monitoring started...")
         while self.monitoring_active:
             live_watts = self.hw_monitor.get_live_power_total()
             if live_watts > 0 and self.system_max_tdp > 0:
