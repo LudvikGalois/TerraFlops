@@ -70,16 +70,23 @@ for idx, params in enumerate(param_combinations, 1):
     print(f"done")
 
 print("\n" + "=" * 50)
-print("Top 3 Configurations by Accuracy")
+print("All Configurations")
 print("=" * 50)
 
 df = pd.DataFrame(results)
 df = df.sort_values('Model_Accuracy', ascending=False)
 
-for rank, (idx, row) in enumerate(df.head(3).iterrows(), 1):
+for rank, (idx, row) in enumerate(df.iterrows(), 1):
     print(f"\n#{rank} - C={row['C']}, solver={row['Solver']}, max_iter={row['Max_Iter']}")
     print(f"    Accuracy: {row['Model_Accuracy']:.4f}")
     print(f"    Sustainability: {row['Sustainability_Score']}/10")
+    print(f"    Efficiency: {row['Efficiency_Score']}/10")
     print(f"    Carbon: {row['Total_Carbon_Footprint_kg']:.8f} kg CO2")
     print(f"    Carbon/Acc: {row['Carbon_per_Accuracy']:.8f} kg")
     print(f"    Training time: {row['Training_Time_sec']:.3f}s")
+
+# Calculate total CO2 for entire run
+total_co2 = df['Total_Carbon_Footprint_kg'].sum()
+print("\n" + "=" * 50)
+print(f"Total CO2 for entire run: {total_co2:.8f} kg CO2")
+print("=" * 50)

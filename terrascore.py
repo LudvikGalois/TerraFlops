@@ -17,9 +17,8 @@ class TerraScore:
             raw_emissions_kg = 0.0
             print("[TerraScore] Warning: CodeCarbon tracker was not running.")
 
-        # evaluator.stop() returns PUE and the legacy eff_score. 
-        # We capture eff_score to prevent unpack errors, but bypass it for the final calculation.
-        pue, _ = evaluator.stop()
+        # evaluator.stop() returns PUE and the efficiency score
+        pue, efficiency_score = evaluator.stop()
         
         # 1. Total Carbon Calculation (incorporating PUE directly)
         final_emissions_kg = raw_emissions_kg * pue
@@ -47,6 +46,7 @@ class TerraScore:
             "Recall_Weighted": round(report_dict['weighted avg']['recall'], 4),
             "Raw_IT_Emissions_kg": raw_emissions_kg,
             "PUE": round(pue, 3),
+            "Efficiency_Score": efficiency_score,
             "Total_Carbon_Footprint_kg": final_emissions_kg,
             "Sustainability_Score": round(sustainability_score, 1),
             "Carbon_per_Accuracy": round(carbon_per_accuracy, 8),
@@ -62,7 +62,7 @@ class TerraScore:
         df = pd.DataFrame(reports)
         cols = [
             "Model_Name", "Model_Accuracy", "Sustainability_Score", 
-            "Total_Carbon_Footprint_kg", "Carbon_per_Accuracy", "PUE"
+            "Total_Carbon_Footprint_kg", "Carbon_per_Accuracy", "PUE", "Efficiency_Score"
         ]
         
         if "Model_Name" not in df.columns:
