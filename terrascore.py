@@ -17,23 +17,28 @@ class TerraScore:
             raw_emissions_kg = 0.0
             print("[TerraScore] Warning: CodeCarbon tracker was not running.")
 
-        pue, eff_score = evaluator.stop()
+        # evaluator.stop() returns PUE and the legacy eff_score. 
+        # We capture eff_score to prevent unpack errors, but bypass it for the final calculation.
+        pue, _ = evaluator.stop()
+        
+        # 1. Total Carbon Calculation (incorporating PUE directly)
         final_emissions_kg = raw_emissions_kg * pue
 
         report_dict = classification_report(y_true, y_pred, output_dict=True)
         accuracy = accuracy_score(y_true, y_pred)
         macro_f1 = f1_score(y_true, y_pred, average='macro')
 
+        # 2. Capability Ratio
         carbon_per_accuracy = final_emissions_kg / max(accuracy, 0.01)
         carbon_per_f1 = final_emissions_kg / max(macro_f1, 0.01)
 
+        # 3. Logarithmic Scoring (Option 2 methodology)
         if carbon_per_accuracy > 0:
             log_carbon = math.log10(carbon_per_accuracy)
-            carbon_score = max(0, min(10, 10 - ((log_carbon + 8) * 2)))
+            # Maps the logarithmic carbon ratio to a 1-10 scale
+            sustainability_score = max(1.0, min(10.0, 10.0 - ((log_carbon + 8.0) * 2.0)))
         else:
-            carbon_score = 10.0
-        
-        composite_score = round((eff_score * 0.7) + (carbon_score * 0.3), 1)
+            sustainability_score = 10.0
 
         green_report = {
             "Model_Accuracy": round(accuracy, 4),
@@ -43,9 +48,7 @@ class TerraScore:
             "Raw_IT_Emissions_kg": raw_emissions_kg,
             "PUE": round(pue, 3),
             "Total_Carbon_Footprint_kg": final_emissions_kg,
-            "Sustainability_Score": composite_score,
-            "Hardware_Efficiency_Score": eff_score,
-            "Carbon_Efficiency_Score": round(carbon_score, 1),
+            "Sustainability_Score": round(sustainability_score, 1),
             "Carbon_per_Accuracy": round(carbon_per_accuracy, 8),
             "Carbon_per_F1": round(carbon_per_f1, 8)
         }
