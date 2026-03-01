@@ -80,8 +80,6 @@ for rank, (idx, row) in enumerate(df.head(3).iterrows(), 1):
     print(f"\n#{rank} - C={row['C']}, solver={row['Solver']}, max_iter={row['Max_Iter']}")
     print(f"    Accuracy: {row['Model_Accuracy']:.4f}")
     print(f"    Sustainability: {row['Sustainability_Score']}/10")
-    print(f"      - Hardware efficiency: {row['Hardware_Efficiency_Score']:.1f}/10")
-    print(f"      - Carbon efficiency: {row['Carbon_Efficiency_Score']:.1f}/10")
     print(f"    Carbon: {row['Total_Carbon_Footprint_kg']:.8f} kg CO2")
     print(f"    Carbon/Acc: {row['Carbon_per_Accuracy']:.8f} kg")
     print(f"    Training time: {row['Training_Time_sec']:.3f}s")

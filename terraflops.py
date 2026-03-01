@@ -323,7 +323,7 @@ class TerraFlops:
             self.monitor_thread.start()
 
     def calculate_efficiency_score(self, pue: float) -> float:
-        """Convert PUE value to a sustainability score from 1 to 10."""
+        """Convert PUE value to a efficiency score from 1 to 10."""
         if pue <= 1.05: return 10.0
         if pue >= 1.60: return 1.0
         score = 10.0 - ((pue - 1.05) * 16.36)
