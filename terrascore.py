@@ -34,9 +34,9 @@ class TerraScore:
         ### 2.5 Lachlan Addition
         #Based on assumption that accuracy = 1 - e^(computational_expense*efficiency_constant)
         if accuracy >= 1:
-            McGinness_k = 1/final_emmissions_kg
+            McGinness_k = 1/final_emissions_kg
         else:
-            McGinness_k = -log(1-accuracy)/final_emmissions_kg
+            McGinness_k = -math.log(1-accuracy)/final_emissions_kg
 
         # 3. Logarithmic Scoring (Option 2 methodology)
         if carbon_per_accuracy > 0:
