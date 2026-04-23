@@ -1,0 +1,3 @@
+codecarbon
+importlib-resources
+scikit-learn
