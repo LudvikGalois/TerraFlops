@@ -72,6 +72,23 @@ class CarbonBenchmark:
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.show()
 
+    def get_metrics_dataframe(self):
+        """Returns the epoch history as a pandas DataFrame."""
+        import pandas as pd
+        if not self.history:
+            return pd.DataFrame()
+        return pd.DataFrame(self.history)
+
+    def get_all_k_scores(self):
+        """Calculates k_mean and k_sem for all compute metrics."""
+        metrics = ['time', 'electricity', 'co2', 'flops']
+        results = {}
+        for m in metrics:
+            k_mean, k_sem = self.calculate_k(metric=m)
+            results[f"k_{m}"] = k_mean
+            results[f"k_{m}_sem"] = k_sem
+        return results
+        
     def calculate_k(self, metric: str = 'co2') -> tuple:
         """Calculates the average k and Standard Error in the Mean (SEM) from epoch pairs."""
         if len(self.history) < 2:
